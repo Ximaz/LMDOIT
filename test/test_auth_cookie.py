@@ -103,9 +103,5 @@ class TestCookieMixed(unittest.TestCase):
             },
         )
 
-class TestFalseAssertion(unittest.TestCase):
-    def test_wrong(self):
-        self.assertEqual(0, 1)
-
 if __name__ == "__main__":
     unittest.main()
