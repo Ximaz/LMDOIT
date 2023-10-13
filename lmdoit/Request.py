@@ -2,7 +2,6 @@ import requests
 
 from .Response import LMDOIT_Response
 
-
 class LMDOIT_Request_Process:
     def __init__(self, session: requests.Session, url: str, method: str) -> None:
         self._session = session
