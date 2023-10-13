@@ -3,7 +3,7 @@ import unittest
 
 
 sys.path.append("../")
-from lmdoit import LMDOIT
+from lmdoit import *
 
 
 EXPECTED = {

@@ -10,7 +10,7 @@ class TestNoneParameters(unittest.TestCase):
         lmdoit_api = LMDOIT()
 
         try:
-            auth = lmdoit_api.auth(url=None, method="POST")
+            auth = lmdoit_api.no_auth(url=None, method="POST")
         except ValueError as e:
             self.assertEqual(str(e), "You must supply both 'url' and 'method' parameters.")
 
@@ -18,7 +18,7 @@ class TestNoneParameters(unittest.TestCase):
         lmdoit_api = LMDOIT()
 
         try:
-            auth = lmdoit_api.auth(url="https://www.site.com", method=None)
+            auth = lmdoit_api.no_auth(url="https://www.site.com", method=None)
         except ValueError as e:
             self.assertEqual(str(e), "You must supply both 'url' and 'method' parameters.")
 
@@ -26,15 +26,15 @@ class TestNoneParameters(unittest.TestCase):
         lmdoit_api = LMDOIT()
 
         try:
-            auth = lmdoit_api.auth(url=None, method=None)
+            auth = lmdoit_api.no_auth(url=None, method=None)
         except ValueError as e:
             self.assertEqual(str(e), "You must supply both 'url' and 'method' parameters.")
 
     def test_both_ok(self):
         lmdoit_api = LMDOIT()
 
-        auth = lmdoit_api.auth(url="https://www.site.com", method="POST")
-        self.assertIsInstance(auth, LMDOIT_Auth_Process)
+        auth = lmdoit_api.no_auth(url="https://www.site.com", method="POST")
+        self.assertIsInstance(auth, LMDOIT_Request_Process)
 
 if __name__ == "__main__":
     unittest.main()
