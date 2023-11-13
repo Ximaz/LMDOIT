@@ -1,4 +1,5 @@
 import requests
+import requests.cookies
 
 from .Request import LMDOIT_Request_Process
 
@@ -33,6 +34,9 @@ class LMDOIT_Auth_Process:
 
         if isinstance(cookie, dict) and additionnal_cookies is None:
             additionnal_cookies = cookie
+
+        if additionnal_cookies is None:
+            raise ValueError("Unable to parse 'cookie'.")
 
         return {**current_dict_jar, **additionnal_cookies}
 

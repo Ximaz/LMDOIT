@@ -1,4 +1,4 @@
-from __future__ import annotations # Fix the circular import.
+from __future__ import annotations  # Fix the circular import.
 
 import pathlib
 import re
@@ -98,9 +98,10 @@ class LMDOIT_Response:
             if not requestable
             else [
                 Request.LMDOIT_Request_Process(
-                    session=self._session, url=s.get("src"), method="GET"
+                    session=self._session, url=src, method="GET"
                 )
-                for s in scripts
+                for src in map(lambda s: s.get("src", None), scripts)
+                if isinstance(src, str)
             ]
         )
 
