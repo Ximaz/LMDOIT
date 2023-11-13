@@ -78,32 +78,49 @@ class LMDOIT_Response:
             else self._soup.select_one(selector=css_selector)
         )
 
-    def find_scripts_elements(
-        self, requestable: bool = False
-    ) -> bs4.ResultSet[bs4.Tag] | list[Request.LMDOIT_Request_Process]:
+    def find_all_scripts_element(self) -> list[bs4.Tag]:
         """
-        Find all scripts elements.
-        If `requestable` is set to True, converts all of them to
-        :class:`LMDOIT_Request_Process` which can then be requested.
+        Find all both loaded and static scripts elements each as a new
+        :class:`bs4.Tag`.
 
-        :param requestable: (optionnal) Whether to transform or not scripts.
-        :type requestable: `bool`
-        :return: The list of found scripts, or `None`
-        :rtype: `bs4.ResultSet[bs4.Tag]` | `list[LMDOIT_Request_Process]`
+        :return: The list of found scripts.
+        :rtype:  `list[bs4.Tag]`
+        """
+        return self._soup.select(selector="script")
+
+    def find_static_scripts_elements(self) -> list[bs4.Tag]:
+        """
+        Find all static scripts elements each as :class:`bs4.Tag`.
+
+        :return: The list of found scripts.
+        :rtype:  `list[bs4.Tag]`
+        """
+        return list(filter(lambda s: not s.has_attr("src"), self.find_all_scripts_element()))
+
+    def find_loaded_scripts_elements(self) -> list[bs4.Tag]:
+        """
+        Find all loaded scripts elements each as a new :class:`bs4.Tag`.
+
+        :return: The list of found scripts.
+        :rtype:  `list[bs4.Tag]`
+        """
+        return list(filter(lambda s: s.has_attr("src"), self.find_all_scripts_element()))
+
+    def find_loaded_scripts_as_preload(self) -> list[Request.LMDOIT_Request_Process]:
+        """
+        Find all loaded scripts elements each as a new :class:`LMDOIT_Request_Process`.
+
+        :return: The list of found scripts.
+        :rtype:  `list[LMDOIT_Request_Process]`
         """
 
-        scripts = self._soup.select(selector="script")
-        return (
-            scripts
-            if not requestable
-            else [
-                Request.LMDOIT_Request_Process(
-                    session=self._session, url=src, method="GET"
-                )
-                for src in map(lambda s: s.get("src", None), scripts)
-                if isinstance(src, str)
-            ]
-        )
+        return [
+            Request.LMDOIT_Request_Process(session=self._session, url=src, method="GET")
+            for src in map(
+                lambda s: s.get("src", None), self.find_loaded_scripts_elements()
+            )
+            if isinstance(src, str)
+        ]
 
     def match_regex(
         self, regex: str | re.Pattern, match_each_line: bool = True
