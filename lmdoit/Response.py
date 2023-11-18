@@ -84,7 +84,7 @@ class LMDOIT_Response:
             else self._soup.select_one(selector=css_selector)
         )
 
-    def find_all_scripts_element(self) -> list[bs4.Tag]:
+    def find_all_script_elements(self) -> list[bs4.Tag]:
         """
         Find all both loaded and static scripts elements each as a new
         :class:`bs4.Tag`.
@@ -94,7 +94,7 @@ class LMDOIT_Response:
         """
         return self._soup.select(selector="script")
 
-    def find_static_scripts_elements(self) -> list[bs4.Tag]:
+    def find_static_script_elements(self) -> list[bs4.Tag]:
         """
         Find all static scripts elements each as :class:`bs4.Tag`.
 
@@ -102,10 +102,10 @@ class LMDOIT_Response:
         :rtype:  `list[bs4.Tag]`
         """
         return list(
-            filter(lambda s: not s.has_attr("src"), self.find_all_scripts_element())
+            filter(lambda s: not s.has_attr("src"), self.find_all_script_elements())
         )
 
-    def find_loaded_scripts_elements(self) -> list[bs4.Tag]:
+    def find_loaded_script_elements(self) -> list[bs4.Tag]:
         """
         Find all loaded scripts elements each as a new :class:`bs4.Tag`.
 
@@ -113,10 +113,12 @@ class LMDOIT_Response:
         :rtype:  `list[bs4.Tag]`
         """
         return list(
-            filter(lambda s: s.has_attr("src"), self.find_all_scripts_element())
+            filter(lambda s: s.has_attr("src"), self.find_all_script_elements())
         )
 
-    def find_loaded_scripts_as_preload(self) -> list[Request.LMDOIT_Request_Process]:
+    def find_loaded_scripts_as_new_request(
+        self,
+    ) -> list[Request.LMDOIT_Request_Process]:
         """
         Find all loaded scripts elements each as a new :class:`LMDOIT_Request_Process`.
 
@@ -127,7 +129,7 @@ class LMDOIT_Response:
         return [
             Request.LMDOIT_Request_Process(session=self._session, url=src, method="GET")
             for src in map(
-                lambda s: s.get("src", None), self.find_loaded_scripts_elements()
+                lambda s: s.get("src", None), self.find_loaded_script_elements()
             )
             if isinstance(src, str)
         ]
@@ -139,7 +141,7 @@ class LMDOIT_Response:
             return False
         return True
 
-    def find_json_objects_from_scripts_element(
+    def find_json_objects_from_script_elements(
         self, application_json_only: bool = False
     ) -> typing.Generator[typing.Any, typing.Any, typing.Any]:
         """
@@ -160,14 +162,14 @@ class LMDOIT_Response:
                         lambda s: (
                             s.has_attr("type") and s.attrs["type"] == "application/json"
                         ),
-                        self.find_static_scripts_elements(),
+                        self.find_static_script_elements(),
                     ),
                 )
             )
 
         for matchs in map(
             lambda s: _JSON_REGEX.findall(s.text),
-            self.find_static_scripts_elements(),
+            self.find_static_script_elements(),
         ):
             for m in matchs:
                 if self._is_valid_json(m):
