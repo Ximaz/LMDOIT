@@ -1,5 +1,6 @@
 from __future__ import annotations  # Fix the circular import.
 
+import json
 import pathlib
 import re
 import typing
@@ -18,6 +19,11 @@ OnErrorCallback = typing.Callable[
     ],
     typing.Any,
 ]
+
+_JSON_REGEX = re.compile(
+    r"(?:[{\[]{1}(?:[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]|\".*?\")+[}\]]{1})",
+    flags=re.MULTILINE,
+)
 
 
 class LMDOIT_Response:
@@ -95,7 +101,9 @@ class LMDOIT_Response:
         :return: The list of found scripts.
         :rtype:  `list[bs4.Tag]`
         """
-        return list(filter(lambda s: not s.has_attr("src"), self.find_all_scripts_element()))
+        return list(
+            filter(lambda s: not s.has_attr("src"), self.find_all_scripts_element())
+        )
 
     def find_loaded_scripts_elements(self) -> list[bs4.Tag]:
         """
@@ -104,7 +112,9 @@ class LMDOIT_Response:
         :return: The list of found scripts.
         :rtype:  `list[bs4.Tag]`
         """
-        return list(filter(lambda s: s.has_attr("src"), self.find_all_scripts_element()))
+        return list(
+            filter(lambda s: s.has_attr("src"), self.find_all_scripts_element())
+        )
 
     def find_loaded_scripts_as_preload(self) -> list[Request.LMDOIT_Request_Process]:
         """
@@ -122,14 +132,55 @@ class LMDOIT_Response:
             if isinstance(src, str)
         ]
 
+    def _is_valid_json(self, o, /) -> bool:
+        try:
+            json.loads(o)
+        except json.decoder.JSONDecodeError:
+            return False
+        return True
+
+    def find_json_objects_from_scripts_element(
+        self, application_json_only: bool = False
+    ) -> typing.Generator[typing.Any, typing.Any, typing.Any]:
+        """
+        Find all JSON scripts elements. If `application_json_ony` is set to
+        `True`, only `<script type="application/json" />` will be returned.
+
+        Else, a RegEx is applied to try to fetch all JSON data.
+
+        :return: The list of found JSON objects.
+        :rtype:  `typing.Generator[typing.Any, typing.Any, typing.Any]`
+        """
+
+        if application_json_only:
+            return list(
+                map(
+                    lambda s: json.loads(s.text),
+                    filter(
+                        lambda s: (
+                            s.has_attr("type") and s.attrs["type"] == "application/json"
+                        ),
+                        self.find_static_scripts_elements(),
+                    ),
+                )
+            )
+
+        for matchs in map(
+            lambda s: _JSON_REGEX.findall(s.text),
+            self.find_static_scripts_elements(),
+        ):
+            for m in matchs:
+                if self._is_valid_json(m):
+                    yield json.loads(m)
+
     def match_regex(
         self, regex: str | re.Pattern, match_each_line: bool = True
     ) -> list:
         """
-        Check for matchs of RegEx onto the text response.
+        Check for matchs of RegEx into the text response.
 
         :param regex: The RegEx to match.
-        :param match_each_line: Checks for matchs using `re.Multiple` flag.
+        :param match_each_line: Checks for matchs using `re.MULTILINE` flag.
         :type regex: `str` | `re.Pattern`
         :type match_each_line: `bool`
         :return: The list of all found matches
